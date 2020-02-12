@@ -1,22 +1,23 @@
 import React, { useState, useEffect, Fragment } from 'react';
 import useFetch from '../hooks/useFetch'
 
+import { NavLink } from 'react-router-dom';// ?? history
+
+import { useDispatch } from 'react-redux'//
+import { updateCart } from '../actions/actionCreators';
+
 
 export default function ProductPage({ match }) {
     const url = process.env.REACT_APP_DATA_CATEGORIES_URL + '/' + match.params.id
 
     const [{ data, loading, error }] = useFetch(url) // загрузка данных с сервера
+    const [order, setOrder] = useState({ count: 1, size: '' }) // объект товара
 
     const [form, setForm] = useState({
-        image: '',
-        title: '',
-        sku: '',
-        manufacturer: '',
-        color: '',
-        material: '',
-        season: '',
-        reason: ''
+        // 
     })
+
+    const dispatch = useDispatch()//
 
     useEffect(() => {
         if (data.id !== undefined) {
@@ -29,14 +30,58 @@ export default function ProductPage({ match }) {
                 material: data.material,
                 season: data.season,
                 reason: data.reason,
-                sizes: data.sizes
+                sizes: data.sizes,
+                id: data.id,
+                price: data.price
             })
         }
     }, [data])
 
-    const addtoCart = () => { // в корзину
-        
+    const handleSelected = (evt) => { // выделить выбранный размер
+        const { textContent } = evt.target
+        setOrder({
+            ...order,
+            size: textContent,
+        })
+    }
 
+    const handleDecrement = () => { // уменьшить количество товаров
+        if (order.count > 1) {
+            setOrder({
+                ...order,
+                count: order.count - 1
+            })
+        }
+    }
+
+    const handleIncrement = () => { // увеличить количество товаров
+        if (order.count < 10) {
+            setOrder({
+                ...order,
+                count: order.count + 1
+            })
+        }
+    }
+    const addtoCart = () => { // добавить в корзину - если добавить товар того же размера, должна быть одна строка в корзине!!!
+        const items = JSON.parse(localStorage.getItem('items')) || [];
+        console.log(items);
+
+        let newOrder = { id: form.id, title: form.title, size: order.size, count: order.count, price: form.price };
+
+        let found = items.findIndex(o => o.id === newOrder.id && o.size === newOrder.size);
+        console.log(found);
+        if (found === -1) {
+            items.push(newOrder);
+        } else {
+            items[found].count += newOrder.count;
+        }
+        console.log(items);
+
+        localStorage.setItem('items', JSON.stringify(items));
+        console.log(localStorage.getItem('items'));
+
+        console.log(items);
+        dispatch(updateCart(items))//
     }
 
     if (loading) {
@@ -57,7 +102,7 @@ export default function ProductPage({ match }) {
                     <div className="row">
                         <div className="col-5">
                             <img src={form.image} className="img-fluid" alt={form.title}
-                                onError={null} />
+                                onError={({ target }) => { target.src = 'https://image.freepik.com/free-icon/_318-10072.jpg' }} />
                         </div>
                         <div className="col-7">
                             <table className="table table-bordered">
@@ -89,27 +134,29 @@ export default function ProductPage({ match }) {
                                 </tbody>
                             </table>
                             <div className="text-center">
-                                <p>Размеры в наличии: 
-                                    { form.sizes !== undefined && 
-                                        form.sizes.map((o, i) => o.avalible && 
-                                            <span className="catalog-item-size" key={i} onClick={null}>
+                                <p>Размеры в наличии:
+                                    {form.sizes !== undefined &&
+                                        form.sizes.map((o, i) => o.avalible &&
+                                            <span className={`catalog-item-size ${order.size === o.size ? 'selected' : ''} `} key={i} onClick={handleSelected}>
                                                 {o.size}
-                                            </span> )
+                                            </span>)
                                     }
                                 </p>
-                                { form.sizes !== undefined && 
-                                    <p>Количество: 
+                                {form.sizes !== undefined &&
+                                    <p>Количество:
                                         <span className="btn-group btn-group-sm pl-2">
-                                            <button className="btn btn-secondary" onClick={null}>-</button>
-                                            <span className="btn btn-outline-primary">1</span>
-                                            <button className="btn btn-secondary" onClick={null}>+</button>
+                                            <button className="btn btn-secondary" onClick={handleDecrement}>-</button>
+                                            <span className="btn btn-outline-primary">{order.count}</span>
+                                            <button className="btn btn-secondary" onClick={handleIncrement}>+</button>
                                         </span>
                                     </p>
                                 }
                             </div>
-                            <button className='btn btn-danger btn-block btn-lg' disabled={false} onClick={addtoCart}>В корзину</button>
-                        </div> 
-                    </div> 
+                            <NavLink to="/cart">
+                                <button className='btn btn-danger btn-block btn-lg' disabled={order.size ? false : true} onClick={addtoCart}>В корзину</button>
+                            </NavLink>
+                        </div>
+                    </div>
                 </section>
             }
         </Fragment>

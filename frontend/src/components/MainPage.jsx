@@ -9,7 +9,10 @@ export default function MainPage() {
                 <div className="row">
                     <div className="col">
                         <Bestsellers />
-                        <Catalog />
+                        <section className='container catalog'>
+                            <h2 className='text-center'>Каталог</h2>
+                            <Catalog />
+                        </section>
                     </div>
                 </div>
             </main>

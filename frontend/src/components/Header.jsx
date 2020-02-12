@@ -3,13 +3,30 @@ import { NavLink } from 'react-router-dom';
 import logo from '../img/header-logo.png';
 import banner from '../img/banner.jpg';
 import useReactRouter from 'use-react-router'
+import { useSelector, useDispatch } from 'react-redux'
+import { searchProducts } from '../actions/actionCreators'
 
 
 export default function Header() {
     const { history } = useReactRouter()
+    const dispatch = useDispatch()
 
-    const handleGotoCart = () => { // перейти в корзину
-        history.push('cart')
+    const { count } = useSelector(state => state.cartUpdate)
+
+    const handleClickSearch = () => { // скрыть/открыть строку поиска
+        const searchFormEl = document.querySelector('[data-id=search-form]')
+        searchFormEl.classList.toggle('invisible')
+        searchFormEl.querySelector('input').focus()
+        if (searchFormEl.querySelector('.form-control').value !== "") {
+            history.push('catalog')
+            searchFormEl.querySelector('.form-control').value = ""
+        }
+    }
+
+    const handleChangeTextSearch = ({ target }) => { // отправить текст поиска      
+        if (target.value) {
+            dispatch(searchProducts(target.value))
+        }
     }
 
     return (
@@ -38,13 +55,14 @@ export default function Header() {
                                 </ul>
                                 <div>
                                     <div className='header-controls-pics'>
-                                        <div data-id='search-expander' className='header-controls-pic header-controls-search'></div>
+                                        <div data-id='search-expander' className='header-controls-pic header-controls-search' onClick={handleClickSearch}></div>
                                         {/*<!-- Do programmatic navigation on click to /cart.html -->*/}
                                         <NavLink to="/cart" className='header-controls-pic header-controls-cart' onClick={null}>
-                                            <div className='header-controls-cart-full'>1</div>
+                                            {count !== 0 &&
+                                                <div className='header-controls-cart-full'>{count}</div>}
                                             <div className='header-controls-cart-menu'></div>
                                         </NavLink>
-                                        <form data-id='search-form' className='header-controls-search-form form-inline invisible'>
+                                        <form data-id='search-form' className='header-controls-search-form form-inline invisible' onChange={handleChangeTextSearch}>
                                             <input className='form-control' placeholder='Поиск' />
                                         </form>
                                     </div>
@@ -52,18 +70,18 @@ export default function Header() {
                             </div>
                         </nav>
                     </div>
-                    </div>
-                </header>
-                <div className='container'>
-                    <div className='row'>
-                        <div className='col'>
-                            <div className='banner'>
-                                <img src={banner} className='img-fluid' alt='К весне готовы!' />
-                                <h2 className='banner-header'>К весне готовы!</h2>
-                            </div>
+                </div>
+            </header>
+            <div className='container'>
+                <div className='row'>
+                    <div className='col'>
+                        <div className='banner'>
+                            <img src={banner} className='img-fluid' alt='К весне готовы!' />
+                            <h2 className='banner-header'>К весне готовы!</h2>
                         </div>
                     </div>
                 </div>
+            </div>
         </Fragment>
-            );
-        }
+    );
+}
